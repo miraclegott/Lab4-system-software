@@ -2,6 +2,8 @@ package org.storage;
 
 import java.util.*;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FileSystem {
     private final Map<String, Node> catalog = new HashMap<>();
@@ -31,12 +33,28 @@ public class FileSystem {
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.print("> ");
-            String input = scanner.nextLine();
-            String[] parts = input.split(" ", 2);
-            String command = parts[0];
-            String[] arguments = parts.length > 1 ? parts[1].split(" ") : new String[0];
+            String input = scanner.nextLine().trim();
+
+            String[] tokens = parseArgs(input); // <- новий метод!
+            if (tokens.length == 0) continue;
+
+            String command = tokens[0];
+            String[] arguments = Arrays.copyOfRange(tokens, 1, tokens.length);
+
             selectAction(command, arguments).execute();
         }
+    }
+
+    private String[] parseArgs(String input) {
+        List<String> args = new ArrayList<>();
+        Matcher m = Pattern.compile("\"([^\"]*)\"|(\\S+)").matcher(input);
+        while (m.find()) {
+            if (m.group(1) != null)
+                args.add(m.group(1)); // текст у лапках
+            else
+                args.add(m.group(2)); // звичайне слово
+        }
+        return args.toArray(new String[0]);
     }
 
     private Action selectAction(String command, String[] args) {
